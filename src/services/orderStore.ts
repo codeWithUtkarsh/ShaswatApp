@@ -8,6 +8,7 @@ import {
   ReturnItem,
   SKU,
 } from "../models/Order";
+import { shopDB } from "./database";
 
 interface OrderStore {
   orders: Order[];
@@ -45,43 +46,14 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
     try {
       set({ loading: true, error: null });
 
-      // Mock API call - in a real app, this would be an API request
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Initialize default SKUs if database is empty
+      await shopDB.initializeSKUs();
 
-      // Mock SKUs data
-      const mockSKUs: SKU[] = [
-        {
-          id: "SKU001",
-          name: "Product A",
-          description: "A high-quality product for everyday use",
-          price: 250,
-          costPerUnit: 200,
-        },
-        {
-          id: "SKU002",
-          name: "Product B",
-          description: "Premium product with extra features",
-          price: 350,
-          costPerUnit: 280,
-        },
-        {
-          id: "SKU003",
-          name: "Product C",
-          description: "Economy version for budget-conscious customers",
-          price: 150,
-          costPerUnit: 100,
-        },
-        {
-          id: "SKU004",
-          name: "Product D",
-          description: "Specialized product for specific needs",
-          price: 450,
-          costPerUnit: 380,
-        },
-      ];
+      // Fetch SKUs from IndexedDB
+      const skus = await shopDB.getAllSKUs();
 
-      set({ skus: mockSKUs, loading: false });
-      return mockSKUs;
+      set({ skus, loading: false });
+      return skus;
     } catch (error) {
       set({
         loading: false,
@@ -96,14 +68,12 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
     try {
       set({ loading: true, error: null });
 
-      // Mock API call - in a real app, this would be an API request
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // Calculate total amount
+      // Calculate total amount using database pricing
       let totalAmount = 0;
 
       // Calculate total for order items
       orderData.orderItems.forEach((item) => {
+        // Use the price from the SKU which comes from database
         totalAmount += item.sku.price * item.quantity;
       });
 
@@ -146,45 +116,7 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
     try {
       set({ loading: true, error: null });
 
-      // Mock API call - in a real app, this would be an API request
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // If we don't have any orders yet, create some mock data
-      if (get().orders.length === 0) {
-        // First ensure we have SKUs
-        const skus =
-          get().skus.length > 0 ? get().skus : await get().fetchSKUs();
-
-        // Mock Orders
-        const mockOrders: Order[] = [
-          {
-            id: "1",
-            shopId: "1",
-            orderItems: [
-              { sku: skus[0], quantity: 5 },
-              { sku: skus[1], quantity: 2 },
-            ],
-            totalAmount: 1950, // (250 * 5) + (350 * 2)
-            discountAmount: 0,
-            finalAmount: 1950,
-            createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-          },
-          {
-            id: "2",
-            shopId: "2",
-            orderItems: [{ sku: skus[2], quantity: 10 }],
-            totalAmount: 1500, // (150 * 10)
-            discountAmount: 105, // 10% discount
-            finalAmount: 945,
-            discountCode: "SUMMER10",
-            createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
-          },
-        ];
-
-        set({ orders: mockOrders, loading: false });
-        return mockOrders;
-      }
-
+      // Return existing orders from state
       set({ loading: false });
       return get().orders;
     } catch (error) {
@@ -205,14 +137,12 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
     try {
       set({ loading: true, error: null });
 
-      // Mock API call - in a real app, this would be an API request
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // Calculate total amount for returns
+      // Calculate total amount for returns using database pricing
       let totalAmount = 0;
 
       // Calculate total for return items
       returnData.returnItems.forEach((item) => {
+        // Use the price from the SKU which comes from database
         totalAmount += item.sku.price * item.quantity;
       });
 
@@ -244,41 +174,7 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
     try {
       set({ loading: true, error: null });
 
-      // Mock API call - in a real app, this would be an API request
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // If we don't have any return orders yet, create some mock data
-      if (get().returnOrders.length === 0) {
-        // First ensure we have SKUs
-        const skus =
-          get().skus.length > 0 ? get().skus : await get().fetchSKUs();
-
-        // Mock Return Orders
-        const mockReturnOrders: ReturnOrder[] = [
-          {
-            id: "1",
-            shopId: "1",
-            returnItems: [{ sku: skus[1], quantity: 1 }],
-            totalAmount: 350,
-            reasonCode: "DAMAGED",
-            notes: "Product was damaged during delivery",
-            createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
-          },
-          {
-            id: "2",
-            shopId: "2",
-            returnItems: [{ sku: skus[3], quantity: 1 }],
-            totalAmount: 450,
-            reasonCode: "WRONG_ITEM",
-            notes: "Customer received incorrect item",
-            createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 days ago
-          },
-        ];
-
-        set({ returnOrders: mockReturnOrders, loading: false });
-        return mockReturnOrders;
-      }
-
+      // Return existing return orders from state
       set({ loading: false });
       return get().returnOrders;
     } catch (error) {
@@ -310,9 +206,6 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
   applyDiscount: async (orderId: string, discountCode: string) => {
     try {
       set({ loading: true, error: null });
-
-      // Mock API call - in a real app, this would validate the discount code
-      await new Promise((resolve) => setTimeout(resolve, 500));
 
       const orders = [...get().orders];
       const orderIndex = orders.findIndex((order) => order.id === orderId);

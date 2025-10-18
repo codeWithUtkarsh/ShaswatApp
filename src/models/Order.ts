@@ -2,7 +2,8 @@ export interface SKU {
   id: string;
   name: string;
   description: string;
-  price: number;
+  price: number; // Price per unit/piece
+  boxPrice: number; // Price per box
   costPerUnit: number;
 }
 
