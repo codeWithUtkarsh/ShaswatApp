@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { Shop, ShopFormData } from "../models/Shop";
+import { shopDB } from "./database";
 
 interface ShopStore {
   shops: Shop[];
@@ -27,10 +28,6 @@ export const useShopStore = create<ShopStore>((set, get) => ({
     try {
       set({ loading: true, error: null });
 
-      // Mock API call - in a real app, this would be an API request
-      // Adding a delay to simulate network request
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
       const newShop: Shop = {
         id: Date.now().toString(), // Generate a temporary ID
         ...shopData,
@@ -39,6 +36,9 @@ export const useShopStore = create<ShopStore>((set, get) => ({
         latitude: shopData.latitude,
         longitude: shopData.longitude,
       };
+
+      // Save to IndexedDB
+      await shopDB.addShop(newShop);
 
       set((state) => ({
         shops: [...state.shops, newShop],
@@ -60,43 +60,11 @@ export const useShopStore = create<ShopStore>((set, get) => ({
     try {
       set({ loading: true, error: null });
 
-      // Mock API call - in a real app, this would be an API request
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Fetch shops from IndexedDB
+      const shops = await shopDB.getAllShops();
 
-      // If we had shops in the store already, we'd return them
-      // This is just for demo purposes
-      if (get().shops.length === 0) {
-        const mockShops: Shop[] = [
-          {
-            id: "1",
-            name: "Central Market",
-            location: "Main Street",
-            phoneNumber: "123-456-7890",
-            category: "retailer",
-            isNew: false,
-            createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), // 14 days ago
-            latitude: 28.6139,
-            longitude: 77.209,
-          },
-          {
-            id: "2",
-            name: "Wholesale Depot",
-            location: "Industrial Zone",
-            phoneNumber: "987-654-3210",
-            category: "wholeseller",
-            isNew: true,
-            createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
-            latitude: 28.6229,
-            longitude: 77.21,
-          },
-        ];
-
-        set({ shops: mockShops, loading: false });
-        return mockShops;
-      }
-
-      set({ loading: false });
-      return get().shops;
+      set({ shops, loading: false });
+      return shops;
     } catch (error) {
       set({
         loading: false,
@@ -120,6 +88,16 @@ export const useShopStore = create<ShopStore>((set, get) => ({
         }
         return shop;
       });
+
+      // Update shops in IndexedDB
+      for (const shop of updatedShops) {
+        if (
+          shop.isNew === false &&
+          get().shops.find((s) => s.id === shop.id)?.isNew === true
+        ) {
+          await shopDB.updateShop(shop);
+        }
+      }
 
       set({ shops: updatedShops, loading: false });
     } catch (error) {
