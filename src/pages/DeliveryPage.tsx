@@ -38,7 +38,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import PendingIcon from "@mui/icons-material/Pending";
 import DeliveryDiningIcon from "@mui/icons-material/DeliveryDining";
 
-import { useAuthStore } from "../services/authService";
+import { useUser, useClerk } from "@clerk/clerk-react";
 import { useShopStore } from "../services/shopStore";
 import { useOrderStore } from "../services/orderStore";
 import { useDeliveryStore } from "../services/deliveryStore";
@@ -84,7 +84,8 @@ const DELIVERY_PHASES: DeliveryStatus[] = [
 
 const DeliveryPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuthStore();
+  const { user } = useUser();
+  const { signOut } = useClerk();
   const [tabValue, setTabValue] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -115,8 +116,8 @@ const DeliveryPage: React.FC = () => {
 
   const handleLogout = () => {
     handleClose();
-    logout();
-    navigate("/login");
+    signOut();
+    navigate("/");
   };
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -226,12 +227,12 @@ const DeliveryPage: React.FC = () => {
             fontWeight="bold"
             sx={{ flexGrow: 1 }}
           >
-            Shop & Order Management
+            Snack Basket Order Management
           </Typography>
           <Box sx={{ display: "flex", alignItems: "center" }}>
             <Box sx={{ mr: 2 }}>
               <Avatar sx={{ bgcolor: "primary.main", width: 36, height: 36 }}>
-                {user?.name?.charAt(0) || <PersonIcon />}
+                {user?.firstName?.charAt(0) || <PersonIcon />}
               </Avatar>
             </Box>
             <IconButton

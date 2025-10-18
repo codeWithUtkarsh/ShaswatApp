@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -14,23 +14,35 @@ import {
   Menu,
   MenuItem,
 } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import StoreIcon from "@mui/icons-material/Store";
 import ReceiptIcon from "@mui/icons-material/Receipt";
 import LogoutIcon from "@mui/icons-material/Logout";
 import PersonIcon from "@mui/icons-material/Person";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import AddIcon from "@mui/icons-material/Add";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 import UndoIcon from "@mui/icons-material/Undo";
 
-import { useAuthStore } from "../services/authService";
+import { useUser, useClerk } from "@clerk/clerk-react";
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuthStore();
+  const { user } = useUser();
+  const { signOut } = useClerk();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [directLoginUser, setDirectLoginUser] = useState<string | null>(null);
+  const [isDirectLogin, setIsDirectLogin] = useState<boolean>(false);
+
+  useEffect(() => {
+    // Check if user is logged in directly (without Clerk)
+    const directLogin = localStorage.getItem("directLogin") === "true";
+    if (directLogin) {
+      setIsDirectLogin(true);
+      setDirectLoginUser(localStorage.getItem("userEmail"));
+    }
+  }, []);
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -42,8 +54,16 @@ const HomePage: React.FC = () => {
 
   const handleLogout = () => {
     handleClose();
-    logout();
-    navigate("/login");
+    if (isDirectLogin) {
+      // Handle direct login logout
+      localStorage.removeItem("directLogin");
+      localStorage.removeItem("userEmail");
+      navigate("/");
+    } else {
+      // Handle Clerk logout
+      signOut();
+      navigate("/");
+    }
   };
 
   return (
@@ -64,12 +84,14 @@ const HomePage: React.FC = () => {
             fontWeight="bold"
             sx={{ flexGrow: 1 }}
           >
-            Shop & Order Management
+              Snack Basket Order Management
           </Typography>
           <Box sx={{ display: "flex", alignItems: "center" }}>
             <Box sx={{ mr: 2 }}>
               <Avatar sx={{ bgcolor: "primary.main", width: 36, height: 36 }}>
-                {user?.name?.charAt(0) || <PersonIcon />}
+                {isDirectLogin
+                  ? directLoginUser?.charAt(0)?.toUpperCase() || <PersonIcon />
+                  : user?.firstName?.charAt(0) || <PersonIcon />}
               </Avatar>
             </Box>
             <IconButton
@@ -108,7 +130,7 @@ const HomePage: React.FC = () => {
       <Container maxWidth="lg" sx={{ py: 4, flexGrow: 1 }}>
         <Box sx={{ mb: 4 }} className="page-header">
           <Typography variant="h4" component="h1" gutterBottom>
-            Shop & Order Management
+              Snack Basket Order Management
           </Typography>
           <Typography variant="subtitle1" color="text.secondary">
             Manage your shops and orders efficiently
@@ -129,7 +151,10 @@ const HomePage: React.FC = () => {
               }}
             >
               <Typography variant="h5" gutterBottom fontWeight="600">
-                Welcome, {user?.name || "User"}
+                Welcome,{" "}
+                {isDirectLogin
+                  ? directLoginUser?.split("@")[0] || "User"
+                  : user?.firstName || user?.username || "User"}
               </Typography>
               <Typography color="text.secondary">
                 What would you like to do today? Choose from the options below.

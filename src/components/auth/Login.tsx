@@ -134,7 +134,7 @@ const Login: React.FC = () => {
             Welcome Back
           </Typography>
           <Typography variant="subtitle1" align="center" color="text.secondary" gutterBottom sx={{ mb: 4 }}>
-            Sign in to continue to Shop & Order Management
+            Sign in to continue to Snack Basket Order Management
           </Typography>
 
           <form onSubmit={handleLogin}>

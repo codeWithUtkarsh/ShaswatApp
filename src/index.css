@@ -177,3 +177,53 @@ code {
     justify-content: space-between;
     color: #1a237e;
 }
+
+/* Hide all Clerk branding elements globally */
+.cl-internal-b3fm6y,
+.cl-branded,
+.cl-branded-card,
+.cl-footer__powered-by,
+.cl-internal-powered-by,
+[class*="cl-internal-"][class*="branded"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+/* Hide the "Secured by Clerk" side tab */
+.cl-card > a[href*="clerk"],
+.cl-card > button[aria-label*="Clerk"],
+.cl-rootBox > div > div > a[href*="clerk"],
+.cl-rootBox > div > div > button,
+div[style*="writing-mode: vertical"],
+div[style*="writing-mode:vertical"],
+[style*="transform: rotate"],
+[class*="cl-"][class*="badge"],
+[class*="cl-"][class*="branding"] {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+/* Ensure Clerk card has no overflow showing branding */
+.cl-card,
+.cl-rootBox,
+.cl-component {
+    overflow: hidden !important;
+    position: relative !important;
+}
+
+/* Hide any absolutely positioned elements within Clerk components */
+.cl-card > *[style*="position: absolute"],
+.cl-card > *[style*="position:absolute"],
+.cl-rootBox > *[style*="position: absolute"],
+.cl-rootBox > *[style*="position:absolute"] {
+    display: none !important;
+}
+
+/* Additional targeting for dynamic Clerk classes */
+[data-clerk-branding],
+[data-powered-by-clerk] {
+    display: none !important;
+}

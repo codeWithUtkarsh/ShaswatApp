@@ -1,16 +1,15 @@
-import React, { useEffect } from "react";
+import React from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
-  useLocation,
-  useNavigate,
 } from "react-router-dom";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { ClerkProvider } from "@clerk/clerk-react";
 
 // Pages
 import HomePage from "./pages/HomePage";
@@ -20,12 +19,13 @@ import OrderSummaryPage from "./pages/OrderSummaryPage";
 import DeliveryPage from "./pages/DeliveryPage";
 import SurveyPage from "./pages/SurveyPage";
 import ReturnOrderPage from "./pages/ReturnOrder";
+import WelcomePage from "./pages/WelcomePage";
 
-// Auth Components
-import Login from "./components/auth/Login";
-import { useAuthStore } from "./services/authService";
-import { useOrderStore } from "./services/orderStore";
-import { useDeliveryStore } from "./services/deliveryStore";
+// Components
+import AuthWrapper from "./components/auth/AuthWrapper";
+
+// Configuration
+import { clerkPublishableKey, clerkAppearance } from "./config/clerkConfig";
 
 // Create theme
 const theme = createTheme({
@@ -72,111 +72,99 @@ const theme = createTheme({
   },
 });
 
-// Protected route component
-const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
-  const { isAuthenticated, checkAuthStatus } = useAuthStore();
-  const location = useLocation();
-
-  useEffect(() => {
-    checkAuthStatus();
-  }, [checkAuthStatus]);
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  return children;
-};
-
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <LocalizationProvider dateAdapter={AdapterDayjs}>
-        <Router>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/login" element={<Login />} />
+    <ClerkProvider
+      publishableKey={clerkPublishableKey || ""}
+      appearance={clerkAppearance}
+    >
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <Router>
+            <Routes>
+              {/* Welcome page as the root route */}
+              <Route
+                path="/"
+                element={
+                  <AuthWrapper requireAuth={false}>
+                    <WelcomePage />
+                  </AuthWrapper>
+                }
+              />
+              <Route path="/index.html" element={<Navigate to="/" replace />} />
 
-            {/* Redirect root to dashboard if logged in, otherwise to login */}
-            <Route
-              path="/"
-              element={
-                localStorage.getItem("isLoggedIn") === "true" ? (
-                  <Navigate to="/dashboard" replace />
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              }
-            />
+              {/* Protected routes */}
+              <Route
+                path="/dashboard"
+                element={
+                  <AuthWrapper requireAuth={true}>
+                    <HomePage />
+                  </AuthWrapper>
+                }
+              />
 
-            {/* Protected routes */}
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <HomePage />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/new-shop"
+                element={
+                  <AuthWrapper requireAuth={true}>
+                    <ShopFormPage />
+                  </AuthWrapper>
+                }
+              />
 
-            <Route
-              path="/new-shop"
-              element={
-                <ProtectedRoute>
-                  <ShopFormPage />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/order"
+                element={
+                  <AuthWrapper requireAuth={true}>
+                    <OrderPage />
+                  </AuthWrapper>
+                }
+              />
 
-            <Route
-              path="/order"
-              element={
-                <ProtectedRoute>
-                  <OrderPage />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/order-summary"
+                element={
+                  <AuthWrapper requireAuth={true}>
+                    <OrderSummaryPage />
+                  </AuthWrapper>
+                }
+              />
 
-            <Route
-              path="/order-summary"
-              element={
-                <ProtectedRoute>
-                  <OrderSummaryPage />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/delivery"
+                element={
+                  <AuthWrapper requireAuth={true}>
+                    <DeliveryPage />
+                  </AuthWrapper>
+                }
+              />
 
-            <Route
-              path="/delivery"
-              element={
-                <ProtectedRoute>
-                  <DeliveryPage />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/return-order"
+                element={
+                  <AuthWrapper requireAuth={true}>
+                    <ReturnOrderPage />
+                  </AuthWrapper>
+                }
+              />
 
-            <Route
-              path="/return-order"
-              element={
-                <ProtectedRoute>
-                  <ReturnOrderPage />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/survey"
+                element={
+                  <AuthWrapper requireAuth={true}>
+                    <SurveyPage />
+                  </AuthWrapper>
+                }
+              />
 
-            <Route
-              path="/survey"
-              element={
-                <ProtectedRoute>
-                  <SurveyPage />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </Router>
-      </LocalizationProvider>
-    </ThemeProvider>
+              {/* Fallback route */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Router>
+        </LocalizationProvider>
+      </ThemeProvider>
+    </ClerkProvider>
   );
 }
 
