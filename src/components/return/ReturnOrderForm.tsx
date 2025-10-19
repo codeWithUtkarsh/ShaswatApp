@@ -312,8 +312,14 @@ const ReturnOrderForm: React.FC = () => {
                         {item.sku.name} ({item.sku.id})
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        Quantity: {item.quantity} • Price: ₹
-                        {item.sku.price.toFixed(2)}
+                        Quantity: {item.quantity}{" "}
+                        {item.unitType === "box" ? "boxes" : "packets"} • Price:
+                        ₹
+                        {(item.unitType === "box"
+                          ? item.sku.boxPrice
+                          : item.sku.price
+                        ).toFixed(2)}{" "}
+                        per {item.unitType}
                       </Typography>
                     </Box>
                   </Grid>
@@ -452,9 +458,7 @@ const ReturnOrderForm: React.FC = () => {
                   label="Return Reason"
                   displayEmpty
                 >
-                  <MenuItem value="" disabled>
-
-                  </MenuItem>
+                  <MenuItem value="" disabled></MenuItem>
                   {RETURN_REASONS.map((reason) => (
                     <MenuItem key={reason.value} value={reason.value}>
                       {reason.label}
