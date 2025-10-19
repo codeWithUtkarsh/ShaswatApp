@@ -1,4 +1,7 @@
-import { create } from 'zustand';
+import { create } from "zustand";
+
+// Note: This app uses Clerk for authentication
+// This store is kept for legacy compatibility but Clerk should be used instead
 
 interface User {
   id: string;
@@ -13,14 +16,13 @@ interface AuthState {
   loading: boolean;
   error: string | null;
 
-  // Actions
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   checkAuthStatus: () => Promise<boolean>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
-  isAuthenticated: localStorage.getItem('isLoggedIn') === 'true',
+  isAuthenticated: localStorage.getItem("isLoggedIn") === "true",
   user: null,
   loading: false,
   error: null,
@@ -29,55 +31,49 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       set({ loading: true, error: null });
 
-      // Mock API call - in a real app, this would be an API request
-      await new Promise(resolve => setTimeout(resolve, 800));
-
-      // This is just a simulation - in a real app, the backend would validate credentials
-      // and return a JWT token or session cookie along with user data
-      if (email === 'admin@example.com' && password === 'password') {
-        const mockUser: User = {
-          id: 'user-1',
-          name: 'Admin User',
+      if (email === "admin@example.com" && password === "password") {
+        const user: User = {
+          id: "user-1",
+          name: "Admin User",
           email: email,
-          role: 'admin'
+          role: "admin",
         };
 
-        localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('user', JSON.stringify(mockUser));
+        localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("user", JSON.stringify(user));
 
         set({
           isAuthenticated: true,
-          user: mockUser,
-          loading: false
+          user: user,
+          loading: false,
         });
       } else {
-        throw new Error('Invalid email or password');
+        throw new Error("Invalid email or password");
       }
     } catch (error) {
       set({
         loading: false,
-        error: error instanceof Error ? error.message : 'Authentication failed'
+        error: error instanceof Error ? error.message : "Authentication failed",
       });
       throw error;
     }
   },
 
   logout: () => {
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('user');
+    localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("user");
 
     set({
       isAuthenticated: false,
       user: null,
-      error: null
+      error: null,
     });
   },
 
   checkAuthStatus: async () => {
     try {
-      // Check if user is logged in from localStorage
-      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-      const userData = localStorage.getItem('user');
+      const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+      const userData = localStorage.getItem("user");
 
       if (isLoggedIn && userData) {
         const user = JSON.parse(userData) as User;
@@ -87,9 +83,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       return false;
     } catch (error) {
-      console.error('Error checking auth status:', error);
+      console.error("Error checking auth status:", error);
       set({ isAuthenticated: false, user: null });
       return false;
     }
-  }
+  },
 }));

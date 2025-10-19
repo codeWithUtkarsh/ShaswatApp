@@ -18,7 +18,6 @@ interface ShopStore {
   ) => Shop[];
 }
 
-// This is a mock implementation. In a real application, these would connect to an API
 export const useShopStore = create<ShopStore>((set, get) => ({
   shops: [],
   loading: false,

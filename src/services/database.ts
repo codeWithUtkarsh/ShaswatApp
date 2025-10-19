@@ -1,5 +1,5 @@
-// Simple SQLite database wrapper using sql.js
-// This provides persistence for shop data in the browser
+// Supabase Postgres database wrapper for shops and SKUs
+import { supabase } from "../utils/supabase";
 
 interface Shop {
   id?: string;
@@ -23,225 +23,186 @@ interface SKU {
 }
 
 class ShopDatabase {
-  private dbName = "shaswat_shops_db";
-  private storeName = "shops";
-  private skuStoreName = "skus";
-
-  private async getDB(): Promise<IDBDatabase> {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open(this.dbName, 2);
-
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve(request.result);
-
-      request.onupgradeneeded = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
-        if (!db.objectStoreNames.contains(this.storeName)) {
-          const objectStore = db.createObjectStore(this.storeName, {
-            keyPath: "id",
-          });
-          objectStore.createIndex("category", "category", { unique: false });
-          objectStore.createIndex("createdAt", "createdAt", { unique: false });
-        }
-        if (!db.objectStoreNames.contains(this.skuStoreName)) {
-          const skuObjectStore = db.createObjectStore(this.skuStoreName, {
-            keyPath: "id",
-          });
-          skuObjectStore.createIndex("name", "name", { unique: false });
-        }
-      };
-    });
-  }
-
+  // Shop methods
   async addShop(shop: Shop): Promise<Shop> {
-    const db = await this.getDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction([this.storeName], "readwrite");
-      const objectStore = transaction.objectStore(this.storeName);
+    const { data, error } = await supabase
+      .from("shops")
+      .insert([
+        {
+          id: shop.id,
+          name: shop.name,
+          location: shop.location,
+          phone_number: shop.phoneNumber,
+          category: shop.category,
+          is_new: shop.isNew,
+          created_at: shop.createdAt.toISOString(),
+          latitude: shop.latitude,
+          longitude: shop.longitude,
+        },
+      ])
+      .select()
+      .single();
 
-      const shopToStore = {
-        ...shop,
-        createdAt: shop.createdAt.toISOString(),
-      };
+    if (error) throw error;
 
-      const request = objectStore.add(shopToStore);
-
-      request.onsuccess = () => {
-        resolve(shop);
-      };
-
-      request.onerror = () => {
-        reject(request.error);
-      };
-    });
+    return {
+      id: data.id,
+      name: data.name,
+      location: data.location,
+      phoneNumber: data.phone_number,
+      category: data.category,
+      isNew: data.is_new,
+      createdAt: new Date(data.created_at),
+      latitude: data.latitude,
+      longitude: data.longitude,
+    };
   }
 
   async getAllShops(): Promise<Shop[]> {
-    const db = await this.getDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction([this.storeName], "readonly");
-      const objectStore = transaction.objectStore(this.storeName);
-      const request = objectStore.getAll();
+    const { data, error } = await supabase
+      .from("shops")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-      request.onsuccess = () => {
-        const shops = request.result.map((shop: any) => ({
-          ...shop,
-          createdAt: new Date(shop.createdAt),
-        }));
-        resolve(shops);
-      };
+    if (error) throw error;
 
-      request.onerror = () => {
-        reject(request.error);
-      };
-    });
+    return (data || []).map((shop: any) => ({
+      id: shop.id,
+      name: shop.name,
+      location: shop.location,
+      phoneNumber: shop.phone_number,
+      category: shop.category,
+      isNew: shop.is_new,
+      createdAt: new Date(shop.created_at),
+      latitude: shop.latitude,
+      longitude: shop.longitude,
+    }));
   }
 
   async updateShop(shop: Shop): Promise<Shop> {
-    const db = await this.getDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction([this.storeName], "readwrite");
-      const objectStore = transaction.objectStore(this.storeName);
+    const { data, error } = await supabase
+      .from("shops")
+      .update({
+        name: shop.name,
+        location: shop.location,
+        phone_number: shop.phoneNumber,
+        category: shop.category,
+        is_new: shop.isNew,
+        created_at: shop.createdAt.toISOString(),
+        latitude: shop.latitude,
+        longitude: shop.longitude,
+      })
+      .eq("id", shop.id)
+      .select()
+      .single();
 
-      const shopToStore = {
-        ...shop,
-        createdAt:
-          typeof shop.createdAt === "string"
-            ? shop.createdAt
-            : shop.createdAt.toISOString(),
-      };
+    if (error) throw error;
 
-      const request = objectStore.put(shopToStore);
-
-      request.onsuccess = () => {
-        resolve(shop);
-      };
-
-      request.onerror = () => {
-        reject(request.error);
-      };
-    });
+    return {
+      id: data.id,
+      name: data.name,
+      location: data.location,
+      phoneNumber: data.phone_number,
+      category: data.category,
+      isNew: data.is_new,
+      createdAt: new Date(data.created_at),
+      latitude: data.latitude,
+      longitude: data.longitude,
+    };
   }
 
   async deleteShop(id: string): Promise<void> {
-    const db = await this.getDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction([this.storeName], "readwrite");
-      const objectStore = transaction.objectStore(this.storeName);
-      const request = objectStore.delete(id);
+    const { error } = await supabase.from("shops").delete().eq("id", id);
 
-      request.onsuccess = () => {
-        resolve();
-      };
-
-      request.onerror = () => {
-        reject(request.error);
-      };
-    });
+    if (error) throw error;
   }
 
   async clearAllShops(): Promise<void> {
-    const db = await this.getDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction([this.storeName], "readwrite");
-      const objectStore = transaction.objectStore(this.storeName);
-      const request = objectStore.clear();
+    const { error } = await supabase.from("shops").delete().neq("id", "");
 
-      request.onsuccess = () => {
-        resolve();
-      };
-
-      request.onerror = () => {
-        reject(request.error);
-      };
-    });
+    if (error) throw error;
   }
 
+  // SKU methods
   async addSKU(sku: SKU): Promise<SKU> {
-    const db = await this.getDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction([this.skuStoreName], "readwrite");
-      const objectStore = transaction.objectStore(this.skuStoreName);
+    const { data, error } = await supabase
+      .from("skus")
+      .insert([
+        {
+          id: sku.id,
+          name: sku.name,
+          description: sku.description,
+          price: sku.price,
+          box_price: sku.boxPrice,
+          cost_per_unit: sku.costPerUnit,
+        },
+      ])
+      .select()
+      .single();
 
-      const request = objectStore.add(sku);
+    if (error) throw error;
 
-      request.onsuccess = () => {
-        resolve(sku);
-      };
-
-      request.onerror = () => {
-        reject(request.error);
-      };
-    });
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      price: data.price,
+      boxPrice: data.box_price,
+      costPerUnit: data.cost_per_unit,
+    };
   }
 
   async getAllSKUs(): Promise<SKU[]> {
-    const db = await this.getDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction([this.skuStoreName], "readonly");
-      const objectStore = transaction.objectStore(this.skuStoreName);
-      const request = objectStore.getAll();
+    const { data, error } = await supabase.from("skus").select("*");
 
-      request.onsuccess = () => {
-        resolve(request.result);
-      };
+    if (error) throw error;
 
-      request.onerror = () => {
-        reject(request.error);
-      };
-    });
+    return (data || []).map((sku: any) => ({
+      id: sku.id,
+      name: sku.name,
+      description: sku.description,
+      price: sku.price,
+      boxPrice: sku.box_price,
+      costPerUnit: sku.cost_per_unit,
+    }));
   }
 
   async updateSKU(sku: SKU): Promise<SKU> {
-    const db = await this.getDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction([this.skuStoreName], "readwrite");
-      const objectStore = transaction.objectStore(this.skuStoreName);
+    const { data, error } = await supabase
+      .from("skus")
+      .update({
+        name: sku.name,
+        description: sku.description,
+        price: sku.price,
+        box_price: sku.boxPrice,
+        cost_per_unit: sku.costPerUnit,
+      })
+      .eq("id", sku.id)
+      .select()
+      .single();
 
-      const request = objectStore.put(sku);
+    if (error) throw error;
 
-      request.onsuccess = () => {
-        resolve(sku);
-      };
-
-      request.onerror = () => {
-        reject(request.error);
-      };
-    });
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      price: data.price,
+      boxPrice: data.box_price,
+      costPerUnit: data.cost_per_unit,
+    };
   }
 
   async deleteSKU(id: string): Promise<void> {
-    const db = await this.getDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction([this.skuStoreName], "readwrite");
-      const objectStore = transaction.objectStore(this.skuStoreName);
-      const request = objectStore.delete(id);
+    const { error } = await supabase.from("skus").delete().eq("id", id);
 
-      request.onsuccess = () => {
-        resolve();
-      };
-
-      request.onerror = () => {
-        reject(request.error);
-      };
-    });
+    if (error) throw error;
   }
 
   async clearAllSKUs(): Promise<void> {
-    const db = await this.getDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction([this.skuStoreName], "readwrite");
-      const objectStore = transaction.objectStore(this.skuStoreName);
-      const request = objectStore.clear();
+    const { error } = await supabase.from("skus").delete().neq("id", "");
 
-      request.onsuccess = () => {
-        resolve();
-      };
-
-      request.onerror = () => {
-        reject(request.error);
-      };
-    });
+    if (error) throw error;
   }
 
   async initializeSKUs(): Promise<void> {
@@ -333,9 +294,19 @@ class ShopDatabase {
       },
     ];
 
-    for (const sku of defaultSKUs) {
-      await this.addSKU(sku);
-    }
+    // Insert all SKUs using Supabase batch insert
+    const { error } = await supabase.from("skus").insert(
+      defaultSKUs.map((sku) => ({
+        id: sku.id,
+        name: sku.name,
+        description: sku.description,
+        price: sku.price,
+        box_price: sku.boxPrice,
+        cost_per_unit: sku.costPerUnit,
+      })),
+    );
+
+    if (error) throw error;
   }
 }
 

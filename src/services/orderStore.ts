@@ -4,8 +4,6 @@ import {
   OrderFormData,
   ReturnOrder,
   ReturnOrderFormData,
-  OrderItem,
-  ReturnItem,
   SKU,
 } from "../models/Order";
 import { shopDB } from "./database";
@@ -32,7 +30,6 @@ interface OrderStore {
   applyDiscount: (orderId: string, discountCode: string) => Promise<Order>;
 }
 
-// This is a mock implementation. In a real application, these would connect to an API
 export const useOrderStore = create<OrderStore>((set, get) => ({
   orders: [],
   returnOrders: [],
@@ -46,10 +43,7 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
     try {
       set({ loading: true, error: null });
 
-      // Initialize default SKUs if database is empty
       await shopDB.initializeSKUs();
-
-      // Fetch SKUs from IndexedDB
       const skus = await shopDB.getAllSKUs();
 
       set({ skus, loading: false });
@@ -68,26 +62,21 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
     try {
       set({ loading: true, error: null });
 
-      // Calculate total amount using database pricing
       let totalAmount = 0;
 
-      // Calculate total for order items
       orderData.orderItems.forEach((item) => {
-        // Use the price from the SKU which comes from database
         totalAmount += item.sku.price * item.quantity;
       });
 
-      // Apply discount (mock implementation)
       let discountAmount = 0;
       if (orderData.discountCode) {
-        // Simple mock discount - 10% off
         discountAmount = Math.round(totalAmount * 0.1);
       }
 
       const finalAmount = totalAmount - discountAmount;
 
       const newOrder: Order = {
-        id: Date.now().toString(), // Generate a temporary ID
+        id: Date.now().toString(),
         ...orderData,
         totalAmount,
         discountAmount,
@@ -116,7 +105,6 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
     try {
       set({ loading: true, error: null });
 
-      // Return existing orders from state
       set({ loading: false });
       return get().orders;
     } catch (error) {
@@ -137,17 +125,14 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
     try {
       set({ loading: true, error: null });
 
-      // Calculate total amount for returns using database pricing
       let totalAmount = 0;
 
-      // Calculate total for return items
       returnData.returnItems.forEach((item) => {
-        // Use the price from the SKU which comes from database
         totalAmount += item.sku.price * item.quantity;
       });
 
       const newReturnOrder: ReturnOrder = {
-        id: Date.now().toString(), // Generate a temporary ID
+        id: Date.now().toString(),
         ...returnData,
         totalAmount,
         createdAt: new Date(),
@@ -174,7 +159,6 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
     try {
       set({ loading: true, error: null });
 
-      // Return existing return orders from state
       set({ loading: false });
       return get().returnOrders;
     } catch (error) {
@@ -216,7 +200,6 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
 
       const order = orders[orderIndex];
 
-      // Simple mock discount - 10% off
       const discountAmount = Math.round(order.totalAmount * 0.1);
       const finalAmount = order.totalAmount - discountAmount;
 
