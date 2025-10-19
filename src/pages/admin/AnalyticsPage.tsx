@@ -871,89 +871,164 @@ const AnalyticsPage: React.FC = () => {
                     Individual employee performance with minimum thresholds
                   </Typography>
                 </Box>
-                <TableContainer>
-                  <Table>
-                    <TableHead sx={{ bgcolor: "grey.100" }}>
-                      <TableRow>
-                        <TableCell>
-                          <strong>Rank</strong>
-                        </TableCell>
-                        <TableCell>
-                          <strong>Employee</strong>
-                        </TableCell>
-                        <TableCell align="right">
-                          <strong>Total Orders</strong>
-                        </TableCell>
-                        <TableCell align="right">
-                          <strong>Total Revenue</strong>
-                        </TableCell>
-                        <TableCell align="right">
-                          <strong>Avg Order Value</strong>
-                        </TableCell>
-                        <TableCell align="center">
-                          <strong>Status</strong>
-                        </TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {employeeData.map((employee, index) => {
-                        const minOrders = 30;
-                        const meetsMinimum = employee.orders >= minOrders;
-
-                        return (
-                          <TableRow key={index} hover>
+                <Divider />
+                {employeeData.length > 0 ? (
+                  <>
+                    <TableContainer>
+                      <Table>
+                        <TableHead sx={{ bgcolor: "grey.100" }}>
+                          <TableRow>
                             <TableCell>
-                              <Chip
-                                label={`#${index + 1}`}
-                                size="small"
-                                color={index === 0 ? "success" : "default"}
-                              />
+                              <strong>Rank</strong>
                             </TableCell>
                             <TableCell>
-                              <Box>
-                                <Typography fontWeight="500">
-                                  {employee.name}
-                                </Typography>
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                >
-                                  {employee.email}
-                                </Typography>
-                              </Box>
+                              <strong>Employee</strong>
                             </TableCell>
                             <TableCell align="right">
-                              {employee.orders}
+                              <strong>Total Orders</strong>
                             </TableCell>
                             <TableCell align="right">
-                              <Typography
-                                fontWeight="bold"
-                                color="success.main"
-                              >
-                                ₹{employee.revenue.toLocaleString()}
-                              </Typography>
+                              <strong>Total Revenue</strong>
                             </TableCell>
                             <TableCell align="right">
-                              ₹{employee.avgOrderValue.toLocaleString()}
+                              <strong>Avg Order Value</strong>
                             </TableCell>
                             <TableCell align="center">
-                              <Chip
-                                label={meetsMinimum ? "On Target" : "Below Min"}
-                                color={meetsMinimum ? "success" : "warning"}
-                                size="small"
-                              />
+                              <strong>Status</strong>
                             </TableCell>
                           </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-                <Box sx={{ p: 2, bgcolor: "grey.50" }}>
-                  <Typography variant="caption" color="text.secondary">
-                    * Minimum threshold: 30 orders per month
-                  </Typography>
-                </Box>
+                        </TableHead>
+                        <TableBody>
+                          {employeeData.map((employee, index) => {
+                            const minOrders = 30;
+                            const meetsMinimum = employee.orders >= minOrders;
+
+                            return (
+                              <TableRow key={index} hover>
+                                <TableCell>
+                                  <Chip
+                                    label={`#${index + 1}`}
+                                    size="small"
+                                    color={index === 0 ? "success" : "default"}
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <Box>
+                                    <Typography fontWeight="500">
+                                      {employee.name}
+                                    </Typography>
+                                    <Typography
+                                      variant="caption"
+                                      color="text.secondary"
+                                    >
+                                      {employee.email}
+                                    </Typography>
+                                  </Box>
+                                </TableCell>
+                                <TableCell align="right">
+                                  {employee.orders}
+                                </TableCell>
+                                <TableCell align="right">
+                                  <Typography
+                                    fontWeight="bold"
+                                    color="success.main"
+                                  >
+                                    ₹{employee.revenue.toLocaleString()}
+                                  </Typography>
+                                </TableCell>
+                                <TableCell align="right">
+                                  ₹{employee.avgOrderValue.toLocaleString()}
+                                </TableCell>
+                                <TableCell align="center">
+                                  <Chip
+                                    label={
+                                      meetsMinimum ? "On Target" : "Below Min"
+                                    }
+                                    color={meetsMinimum ? "success" : "warning"}
+                                    size="small"
+                                  />
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                    <Box sx={{ p: 2, bgcolor: "grey.50" }}>
+                      <Typography variant="caption" color="text.secondary">
+                        * Minimum threshold: 30 orders per month
+                      </Typography>
+                    </Box>
+                  </>
+                ) : (
+                  <Box sx={{ p: 6, textAlign: "center" }}>
+                    <PeopleIcon
+                      sx={{ fontSize: 60, color: "grey.400", mb: 2 }}
+                    />
+                    <Typography
+                      variant="h6"
+                      color="text.secondary"
+                      gutterBottom
+                    >
+                      No Employee Data Available
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 2 }}
+                    >
+                      Employee performance data will appear here once orders are
+                      created with employee tracking.
+                    </Typography>
+                    <Box
+                      sx={{
+                        bgcolor: "info.light",
+                        p: 2,
+                        borderRadius: 1,
+                        mt: 3,
+                      }}
+                    >
+                      <Typography variant="body2" fontWeight="500" gutterBottom>
+                        📝 To start tracking employee performance:
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        component="div"
+                        sx={{ textAlign: "left", mt: 1 }}
+                      >
+                        <strong>1. Run the database migration</strong> (if not
+                        done yet):
+                        <br />
+                        &nbsp;&nbsp;&nbsp;• Go to Supabase Dashboard → SQL
+                        Editor
+                        <br />
+                        &nbsp;&nbsp;&nbsp;• Run the file:{" "}
+                        <code>
+                          supabase/migration_add_employee_to_orders.sql
+                        </code>
+                        <br />
+                        <br />
+                        <strong>2. Create new orders</strong>:
+                        <br />
+                        &nbsp;&nbsp;&nbsp;• Log in as an employee
+                        <br />
+                        &nbsp;&nbsp;&nbsp;• Create orders normally
+                        <br />
+                        &nbsp;&nbsp;&nbsp;• Employee ID will be tracked
+                        automatically
+                        <br />
+                        <br />
+                        <strong>3. View performance</strong>:
+                        <br />
+                        &nbsp;&nbsp;&nbsp;• Return to this page to see employee
+                        sales data
+                        <br />
+                        &nbsp;&nbsp;&nbsp;• Filter by time period to analyze
+                        performance
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
               </Paper>
             </Grid>
           </Grid>
