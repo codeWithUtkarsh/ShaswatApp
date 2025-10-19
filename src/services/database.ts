@@ -1,5 +1,6 @@
-// Supabase Postgres database wrapper for shops and SKUs
+// Supabase Postgres database wrapper for shops, SKUs, orders, and deliveries
 import { supabase } from "../utils/supabase";
+import { DeliveryStatus } from "../models/Delivery";
 
 interface Shop {
   id?: string;
@@ -20,6 +21,62 @@ interface SKU {
   price: number;
   boxPrice: number;
   costPerUnit: number;
+}
+
+interface OrderItem {
+  sku: SKU;
+  quantity: number;
+  unitType: "packet" | "box";
+}
+
+interface Order {
+  id?: string;
+  shopId: string;
+  orderItems: OrderItem[];
+  totalAmount: number;
+  discountCode?: string;
+  discountAmount?: number;
+  finalAmount: number;
+  createdAt: Date;
+}
+
+interface ReturnItem {
+  sku: SKU;
+  quantity: number;
+  unitType: "packet" | "box";
+}
+
+interface ReturnOrder {
+  id?: string;
+  shopId: string;
+  linkedOrderId?: string;
+  returnItems: ReturnItem[];
+  totalAmount: number;
+  reasonCode?: string;
+  notes?: string;
+  createdAt: Date;
+}
+
+interface StatusUpdate {
+  status: DeliveryStatus;
+  timestamp: Date;
+  notes?: string;
+  location?: string;
+}
+
+interface Delivery {
+  id?: string;
+  orderId: string;
+  shopId: string;
+  status: DeliveryStatus;
+  currentLocation?: string;
+  estimatedDeliveryDate?: Date;
+  actualDeliveryDate?: Date;
+  trackingNumber?: string;
+  deliveryNotes?: string;
+  statusHistory: StatusUpdate[];
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 class ShopDatabase {
@@ -307,6 +364,325 @@ class ShopDatabase {
     );
 
     if (error) throw error;
+  }
+
+  // Order methods
+  async addOrder(order: Order): Promise<Order> {
+    const { data, error } = await supabase
+      .from("orders")
+      .insert([
+        {
+          id: order.id,
+          shop_id: order.shopId,
+          order_items: JSON.stringify(order.orderItems),
+          total_amount: order.totalAmount,
+          discount_code: order.discountCode,
+          discount_amount: order.discountAmount,
+          final_amount: order.finalAmount,
+          created_at: order.createdAt.toISOString(),
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return {
+      id: data.id,
+      shopId: data.shop_id,
+      orderItems: JSON.parse(data.order_items),
+      totalAmount: data.total_amount,
+      discountCode: data.discount_code,
+      discountAmount: data.discount_amount,
+      finalAmount: data.final_amount,
+      createdAt: new Date(data.created_at),
+    };
+  }
+
+  async getAllOrders(): Promise<Order[]> {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    return (data || []).map((order: any) => ({
+      id: order.id,
+      shopId: order.shop_id,
+      orderItems: JSON.parse(order.order_items),
+      totalAmount: order.total_amount,
+      discountCode: order.discount_code,
+      discountAmount: order.discount_amount,
+      finalAmount: order.final_amount,
+      createdAt: new Date(order.created_at),
+    }));
+  }
+
+  async getOrderById(id: string): Promise<Order | null> {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) return null;
+
+    return {
+      id: data.id,
+      shopId: data.shop_id,
+      orderItems: JSON.parse(data.order_items),
+      totalAmount: data.total_amount,
+      discountCode: data.discount_code,
+      discountAmount: data.discount_amount,
+      finalAmount: data.final_amount,
+      createdAt: new Date(data.created_at),
+    };
+  }
+
+  // Return Order methods
+  async addReturnOrder(returnOrder: ReturnOrder): Promise<ReturnOrder> {
+    const { data, error } = await supabase
+      .from("return_orders")
+      .insert([
+        {
+          id: returnOrder.id,
+          shop_id: returnOrder.shopId,
+          linked_order_id: returnOrder.linkedOrderId,
+          return_items: JSON.stringify(returnOrder.returnItems),
+          total_amount: returnOrder.totalAmount,
+          reason_code: returnOrder.reasonCode,
+          notes: returnOrder.notes,
+          created_at: returnOrder.createdAt.toISOString(),
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return {
+      id: data.id,
+      shopId: data.shop_id,
+      linkedOrderId: data.linked_order_id,
+      returnItems: JSON.parse(data.return_items),
+      totalAmount: data.total_amount,
+      reasonCode: data.reason_code,
+      notes: data.notes,
+      createdAt: new Date(data.created_at),
+    };
+  }
+
+  async getAllReturnOrders(): Promise<ReturnOrder[]> {
+    const { data, error } = await supabase
+      .from("return_orders")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    return (data || []).map((returnOrder: any) => ({
+      id: returnOrder.id,
+      shopId: returnOrder.shop_id,
+      linkedOrderId: returnOrder.linked_order_id,
+      returnItems: JSON.parse(returnOrder.return_items),
+      totalAmount: returnOrder.total_amount,
+      reasonCode: returnOrder.reason_code,
+      notes: returnOrder.notes,
+      createdAt: new Date(returnOrder.created_at),
+    }));
+  }
+
+  async getReturnOrderById(id: string): Promise<ReturnOrder | null> {
+    const { data, error } = await supabase
+      .from("return_orders")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) return null;
+
+    return {
+      id: data.id,
+      shopId: data.shop_id,
+      linkedOrderId: data.linked_order_id,
+      returnItems: JSON.parse(data.return_items),
+      totalAmount: data.total_amount,
+      reasonCode: data.reason_code,
+      notes: data.notes,
+      createdAt: new Date(data.created_at),
+    };
+  }
+
+  // Delivery methods
+  async addDelivery(delivery: Delivery): Promise<Delivery> {
+    const { data, error } = await supabase
+      .from("deliveries")
+      .insert([
+        {
+          id: delivery.id,
+          order_id: delivery.orderId,
+          shop_id: delivery.shopId,
+          status: delivery.status,
+          current_location: delivery.currentLocation,
+          estimated_delivery_date:
+            delivery.estimatedDeliveryDate?.toISOString(),
+          actual_delivery_date: delivery.actualDeliveryDate?.toISOString(),
+          tracking_number: delivery.trackingNumber,
+          delivery_notes: delivery.deliveryNotes,
+          status_history: JSON.stringify(delivery.statusHistory),
+          created_at: delivery.createdAt.toISOString(),
+          updated_at: delivery.updatedAt.toISOString(),
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return {
+      id: data.id,
+      orderId: data.order_id,
+      shopId: data.shop_id,
+      status: data.status,
+      currentLocation: data.current_location,
+      estimatedDeliveryDate: data.estimated_delivery_date
+        ? new Date(data.estimated_delivery_date)
+        : undefined,
+      actualDeliveryDate: data.actual_delivery_date
+        ? new Date(data.actual_delivery_date)
+        : undefined,
+      trackingNumber: data.tracking_number,
+      deliveryNotes: data.delivery_notes,
+      statusHistory: JSON.parse(data.status_history),
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at),
+    };
+  }
+
+  async getAllDeliveries(): Promise<Delivery[]> {
+    const { data, error } = await supabase
+      .from("deliveries")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    return (data || []).map((delivery: any) => ({
+      id: delivery.id,
+      orderId: delivery.order_id,
+      shopId: delivery.shop_id,
+      status: delivery.status,
+      currentLocation: delivery.current_location,
+      estimatedDeliveryDate: delivery.estimated_delivery_date
+        ? new Date(delivery.estimated_delivery_date)
+        : undefined,
+      actualDeliveryDate: delivery.actual_delivery_date
+        ? new Date(delivery.actual_delivery_date)
+        : undefined,
+      trackingNumber: delivery.tracking_number,
+      deliveryNotes: delivery.delivery_notes,
+      statusHistory: JSON.parse(delivery.status_history),
+      createdAt: new Date(delivery.created_at),
+      updatedAt: new Date(delivery.updated_at),
+    }));
+  }
+
+  async getDeliveryById(id: string): Promise<Delivery | null> {
+    const { data, error } = await supabase
+      .from("deliveries")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) return null;
+
+    return {
+      id: data.id,
+      orderId: data.order_id,
+      shopId: data.shop_id,
+      status: data.status,
+      currentLocation: data.current_location,
+      estimatedDeliveryDate: data.estimated_delivery_date
+        ? new Date(data.estimated_delivery_date)
+        : undefined,
+      actualDeliveryDate: data.actual_delivery_date
+        ? new Date(data.actual_delivery_date)
+        : undefined,
+      trackingNumber: data.tracking_number,
+      deliveryNotes: data.delivery_notes,
+      statusHistory: JSON.parse(data.status_history),
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at),
+    };
+  }
+
+  async updateDelivery(delivery: Delivery): Promise<Delivery> {
+    const { data, error } = await supabase
+      .from("deliveries")
+      .update({
+        status: delivery.status,
+        current_location: delivery.currentLocation,
+        estimated_delivery_date: delivery.estimatedDeliveryDate?.toISOString(),
+        actual_delivery_date: delivery.actualDeliveryDate?.toISOString(),
+        tracking_number: delivery.trackingNumber,
+        delivery_notes: delivery.deliveryNotes,
+        status_history: JSON.stringify(delivery.statusHistory),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", delivery.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return {
+      id: data.id,
+      orderId: data.order_id,
+      shopId: data.shop_id,
+      status: data.status,
+      currentLocation: data.current_location,
+      estimatedDeliveryDate: data.estimated_delivery_date
+        ? new Date(data.estimated_delivery_date)
+        : undefined,
+      actualDeliveryDate: data.actual_delivery_date
+        ? new Date(data.actual_delivery_date)
+        : undefined,
+      trackingNumber: data.tracking_number,
+      deliveryNotes: data.delivery_notes,
+      statusHistory: JSON.parse(data.status_history),
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at),
+    };
+  }
+
+  async getDeliveryByOrderId(orderId: string): Promise<Delivery | null> {
+    const { data, error } = await supabase
+      .from("deliveries")
+      .select("*")
+      .eq("order_id", orderId)
+      .single();
+
+    if (error) return null;
+
+    return {
+      id: data.id,
+      orderId: data.order_id,
+      shopId: data.shop_id,
+      status: data.status,
+      currentLocation: data.current_location,
+      estimatedDeliveryDate: data.estimated_delivery_date
+        ? new Date(data.estimated_delivery_date)
+        : undefined,
+      actualDeliveryDate: data.actual_delivery_date
+        ? new Date(data.actual_delivery_date)
+        : undefined,
+      trackingNumber: data.tracking_number,
+      deliveryNotes: data.delivery_notes,
+      statusHistory: JSON.parse(data.status_history),
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at),
+    };
   }
 }
 

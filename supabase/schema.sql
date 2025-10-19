@@ -112,3 +112,120 @@ INSERT INTO skus (id, name, description, price, box_price, cost_per_unit) VALUES
   ('SKU009', 'Instant Bhel', 'Ready to eat instant bhel', 40, 1600, 30),
   ('SKU010', 'Chewda', 'Crunchy chewda mix', 40, 1600, 30)
 ON CONFLICT (id) DO NOTHING;
+
+-- Create orders table
+CREATE TABLE IF NOT EXISTS orders (
+  id TEXT PRIMARY KEY,
+  shop_id TEXT NOT NULL REFERENCES shops(id) ON DELETE CASCADE,
+  order_items JSONB NOT NULL,
+  total_amount DECIMAL(10, 2) NOT NULL,
+  discount_code TEXT,
+  discount_amount DECIMAL(10, 2),
+  final_amount DECIMAL(10, 2) NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create index on shop_id for orders
+CREATE INDEX IF NOT EXISTS idx_orders_shop_id ON orders(shop_id);
+CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at DESC);
+
+-- Create return_orders table
+CREATE TABLE IF NOT EXISTS return_orders (
+  id TEXT PRIMARY KEY,
+  shop_id TEXT NOT NULL REFERENCES shops(id) ON DELETE CASCADE,
+  linked_order_id TEXT REFERENCES orders(id) ON DELETE SET NULL,
+  return_items JSONB NOT NULL,
+  total_amount DECIMAL(10, 2) NOT NULL,
+  reason_code TEXT,
+  notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create index on shop_id and linked_order_id for return_orders
+CREATE INDEX IF NOT EXISTS idx_return_orders_shop_id ON return_orders(shop_id);
+CREATE INDEX IF NOT EXISTS idx_return_orders_linked_order_id ON return_orders(linked_order_id);
+CREATE INDEX IF NOT EXISTS idx_return_orders_created_at ON return_orders(created_at DESC);
+
+-- Create deliveries table
+CREATE TABLE IF NOT EXISTS deliveries (
+  id TEXT PRIMARY KEY,
+  order_id TEXT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  shop_id TEXT NOT NULL REFERENCES shops(id) ON DELETE CASCADE,
+  status TEXT NOT NULL CHECK (status IN ('Packaging', 'Transit', 'ShipToOutlet', 'OutForDelivery', 'Delivered')),
+  current_location TEXT,
+  estimated_delivery_date TIMESTAMP WITH TIME ZONE,
+  actual_delivery_date TIMESTAMP WITH TIME ZONE,
+  tracking_number TEXT,
+  delivery_notes TEXT,
+  status_history JSONB NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create indexes for deliveries
+CREATE INDEX IF NOT EXISTS idx_deliveries_order_id ON deliveries(order_id);
+CREATE INDEX IF NOT EXISTS idx_deliveries_shop_id ON deliveries(shop_id);
+CREATE INDEX IF NOT EXISTS idx_deliveries_status ON deliveries(status);
+CREATE INDEX IF NOT EXISTS idx_deliveries_created_at ON deliveries(created_at DESC);
+
+-- Enable Row Level Security for new tables
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE return_orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE deliveries ENABLE ROW LEVEL SECURITY;
+
+-- Create policies for orders table
+CREATE POLICY "Allow read access to orders" ON orders
+  FOR SELECT
+  USING (true);
+
+CREATE POLICY "Allow insert access to orders" ON orders
+  FOR INSERT
+  WITH CHECK (true);
+
+CREATE POLICY "Allow update access to orders" ON orders
+  FOR UPDATE
+  USING (true);
+
+CREATE POLICY "Allow delete access to orders" ON orders
+  FOR DELETE
+  USING (true);
+
+-- Create policies for return_orders table
+CREATE POLICY "Allow read access to return_orders" ON return_orders
+  FOR SELECT
+  USING (true);
+
+CREATE POLICY "Allow insert access to return_orders" ON return_orders
+  FOR INSERT
+  WITH CHECK (true);
+
+CREATE POLICY "Allow update access to return_orders" ON return_orders
+  FOR UPDATE
+  USING (true);
+
+CREATE POLICY "Allow delete access to return_orders" ON return_orders
+  FOR DELETE
+  USING (true);
+
+-- Create policies for deliveries table
+CREATE POLICY "Allow read access to deliveries" ON deliveries
+  FOR SELECT
+  USING (true);
+
+CREATE POLICY "Allow insert access to deliveries" ON deliveries
+  FOR INSERT
+  WITH CHECK (true);
+
+CREATE POLICY "Allow update access to deliveries" ON deliveries
+  FOR UPDATE
+  USING (true);
+
+CREATE POLICY "Allow delete access to deliveries" ON deliveries
+  FOR DELETE
+  USING (true);
+
+-- Trigger to automatically update updated_at for deliveries
+CREATE TRIGGER update_deliveries_updated_at
+  BEFORE UPDATE ON deliveries
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();

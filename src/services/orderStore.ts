@@ -86,6 +86,8 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
         createdAt: new Date(),
       };
 
+      await shopDB.addOrder(newOrder);
+
       set((state) => ({
         orders: [...state.orders, newOrder],
         currentOrder: newOrder,
@@ -107,8 +109,10 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
     try {
       set({ loading: true, error: null });
 
-      set({ loading: false });
-      return get().orders;
+      const orders = await shopDB.getAllOrders();
+
+      set({ orders, loading: false });
+      return orders;
     } catch (error) {
       set({
         loading: false,
@@ -120,7 +124,15 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
   },
 
   getOrderById: (orderId: string) => {
-    return get().orders.find((order) => order.id === orderId) || null;
+    const order = get().orders.find((order) => order.id === orderId);
+    if (order) return order;
+
+    shopDB.getOrderById(orderId).then((dbOrder) => {
+      if (dbOrder) {
+        set((state) => ({ orders: [...state.orders, dbOrder] }));
+      }
+    });
+    return order || null;
   },
 
   createReturnOrder: async (returnData: ReturnOrderFormData) => {
@@ -141,6 +153,8 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
         totalAmount,
         createdAt: new Date(),
       };
+
+      await shopDB.addReturnOrder(newReturnOrder);
 
       set((state) => ({
         returnOrders: [...state.returnOrders, newReturnOrder],
@@ -163,8 +177,10 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
     try {
       set({ loading: true, error: null });
 
-      set({ loading: false });
-      return get().returnOrders;
+      const returnOrders = await shopDB.getAllReturnOrders();
+
+      set({ returnOrders, loading: false });
+      return returnOrders;
     } catch (error) {
       set({
         loading: false,
@@ -176,11 +192,19 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
   },
 
   getReturnOrderById: (returnOrderId: string) => {
-    return (
-      get().returnOrders.find(
-        (returnOrder) => returnOrder.id === returnOrderId,
-      ) || null
+    const returnOrder = get().returnOrders.find(
+      (returnOrder) => returnOrder.id === returnOrderId,
     );
+    if (returnOrder) return returnOrder;
+
+    shopDB.getReturnOrderById(returnOrderId).then((dbReturnOrder) => {
+      if (dbReturnOrder) {
+        set((state) => ({
+          returnOrders: [...state.returnOrders, dbReturnOrder],
+        }));
+      }
+    });
+    return returnOrder || null;
   },
 
   setCurrentOrder: (order: Order | null) => {

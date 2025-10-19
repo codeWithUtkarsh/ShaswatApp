@@ -6,6 +6,7 @@ import {
   DeliveryFormData,
 } from "../models/Delivery";
 import { Order } from "../models/Order";
+import { shopDB } from "./database";
 
 interface DeliveryStore {
   deliveries: Delivery[];
@@ -52,6 +53,8 @@ export const useDeliveryStore = create<DeliveryStore>((set, get) => ({
         createdAt: new Date(),
         updatedAt: new Date(),
       };
+
+      await shopDB.addDelivery(newDelivery);
 
       set((state) => ({
         deliveries: [...state.deliveries, newDelivery],
@@ -105,6 +108,8 @@ export const useDeliveryStore = create<DeliveryStore>((set, get) => ({
         updatedAt: new Date(),
       };
 
+      await shopDB.addDelivery(newDelivery);
+
       set((state) => ({
         deliveries: [...state.deliveries, newDelivery],
         currentDelivery: newDelivery,
@@ -126,8 +131,10 @@ export const useDeliveryStore = create<DeliveryStore>((set, get) => ({
     try {
       set({ loading: true, error: null });
 
-      set({ loading: false });
-      return get().deliveries;
+      const deliveries = await shopDB.getAllDeliveries();
+
+      set({ deliveries, loading: false });
+      return deliveries;
     } catch (error) {
       set({
         loading: false,
@@ -139,15 +146,31 @@ export const useDeliveryStore = create<DeliveryStore>((set, get) => ({
   },
 
   getDeliveryById: (deliveryId: string) => {
-    return (
-      get().deliveries.find((delivery) => delivery.id === deliveryId) || null
+    const delivery = get().deliveries.find(
+      (delivery) => delivery.id === deliveryId,
     );
+    if (delivery) return delivery;
+
+    shopDB.getDeliveryById(deliveryId).then((dbDelivery) => {
+      if (dbDelivery) {
+        set((state) => ({ deliveries: [...state.deliveries, dbDelivery] }));
+      }
+    });
+    return delivery || null;
   },
 
   getDeliveryByOrderId: (orderId: string) => {
-    return (
-      get().deliveries.find((delivery) => delivery.orderId === orderId) || null
+    const delivery = get().deliveries.find(
+      (delivery) => delivery.orderId === orderId,
     );
+    if (delivery) return delivery;
+
+    shopDB.getDeliveryByOrderId(orderId).then((dbDelivery) => {
+      if (dbDelivery) {
+        set((state) => ({ deliveries: [...state.deliveries, dbDelivery] }));
+      }
+    });
+    return delivery || null;
   },
 
   updateDeliveryStatus: async (
@@ -188,6 +211,8 @@ export const useDeliveryStore = create<DeliveryStore>((set, get) => ({
       };
 
       deliveries[deliveryIndex] = updatedDelivery;
+
+      await shopDB.updateDelivery(updatedDelivery);
 
       set({
         deliveries,
