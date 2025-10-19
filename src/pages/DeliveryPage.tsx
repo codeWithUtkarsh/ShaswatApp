@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link as RouterLink } from "react-router-dom";
 import {
   Box,
   Container,
@@ -27,6 +27,7 @@ import {
   FormControl,
   InputLabel,
   Select,
+  Link,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SearchIcon from "@mui/icons-material/Search";
@@ -549,7 +550,20 @@ const DeliveryTable: React.FC<DeliveryTableProps> = ({
                 >
                   <TableCell>{delivery.trackingNumber}</TableCell>
                   <TableCell component="th" scope="row">
-                    #{delivery.orderId}
+                    <Link
+                      component={RouterLink}
+                      to={`/order-detail/${delivery.orderId}`}
+                      sx={{
+                        textDecoration: "none",
+                        color: "primary.main",
+                        fontWeight: 500,
+                        "&:hover": {
+                          textDecoration: "underline",
+                        },
+                      }}
+                    >
+                      #{delivery.orderId}
+                    </Link>
                   </TableCell>
                   <TableCell>{getShopName(delivery.shopId)}</TableCell>
                   <TableCell>{orderDate}</TableCell>

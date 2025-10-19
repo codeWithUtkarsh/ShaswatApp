@@ -79,6 +79,24 @@ interface Delivery {
   updatedAt: Date;
 }
 
+interface Survey {
+  id?: string;
+  shopId?: string;
+  respondentName: string;
+  respondentContact?: string;
+  respondentRole: string;
+  productQualityRating: number;
+  serviceRating: number;
+  deliveryRating: number;
+  priceRating: number;
+  recommendationLikelihood: number;
+  purchaseFrequency: string;
+  feedback?: string;
+  concerns: string[];
+  productSuggestions?: string;
+  createdAt: Date;
+}
+
 class ShopDatabase {
   // Shop methods
   async addShop(shop: Shop): Promise<Shop> {
@@ -683,6 +701,136 @@ class ShopDatabase {
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at),
     };
+  }
+
+  // Survey methods
+  async addSurvey(survey: Survey): Promise<Survey> {
+    const { data, error } = await supabase
+      .from("surveys")
+      .insert([
+        {
+          id: survey.id,
+          shop_id: survey.shopId,
+          respondent_name: survey.respondentName,
+          respondent_contact: survey.respondentContact,
+          respondent_role: survey.respondentRole,
+          product_quality_rating: survey.productQualityRating,
+          service_rating: survey.serviceRating,
+          delivery_rating: survey.deliveryRating,
+          price_rating: survey.priceRating,
+          recommendation_likelihood: survey.recommendationLikelihood,
+          purchase_frequency: survey.purchaseFrequency,
+          feedback: survey.feedback,
+          concerns: JSON.stringify(survey.concerns),
+          product_suggestions: survey.productSuggestions,
+          created_at: survey.createdAt.toISOString(),
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return {
+      id: data.id,
+      shopId: data.shop_id,
+      respondentName: data.respondent_name,
+      respondentContact: data.respondent_contact,
+      respondentRole: data.respondent_role,
+      productQualityRating: data.product_quality_rating,
+      serviceRating: data.service_rating,
+      deliveryRating: data.delivery_rating,
+      priceRating: data.price_rating,
+      recommendationLikelihood: data.recommendation_likelihood,
+      purchaseFrequency: data.purchase_frequency,
+      feedback: data.feedback,
+      concerns: JSON.parse(data.concerns),
+      productSuggestions: data.product_suggestions,
+      createdAt: new Date(data.created_at),
+    };
+  }
+
+  async getAllSurveys(): Promise<Survey[]> {
+    const { data, error } = await supabase
+      .from("surveys")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    return (data || []).map((survey: any) => ({
+      id: survey.id,
+      shopId: survey.shop_id,
+      respondentName: survey.respondent_name,
+      respondentContact: survey.respondent_contact,
+      respondentRole: survey.respondent_role,
+      productQualityRating: survey.product_quality_rating,
+      serviceRating: survey.service_rating,
+      deliveryRating: survey.delivery_rating,
+      priceRating: survey.price_rating,
+      recommendationLikelihood: survey.recommendation_likelihood,
+      purchaseFrequency: survey.purchase_frequency,
+      feedback: survey.feedback,
+      concerns: JSON.parse(survey.concerns),
+      productSuggestions: survey.product_suggestions,
+      createdAt: new Date(survey.created_at),
+    }));
+  }
+
+  async getSurveyById(id: string): Promise<Survey | null> {
+    const { data, error } = await supabase
+      .from("surveys")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) return null;
+
+    return {
+      id: data.id,
+      shopId: data.shop_id,
+      respondentName: data.respondent_name,
+      respondentContact: data.respondent_contact,
+      respondentRole: data.respondent_role,
+      productQualityRating: data.product_quality_rating,
+      serviceRating: data.service_rating,
+      deliveryRating: data.delivery_rating,
+      priceRating: data.price_rating,
+      recommendationLikelihood: data.recommendation_likelihood,
+      purchaseFrequency: data.purchase_frequency,
+      feedback: data.feedback,
+      concerns: JSON.parse(data.concerns),
+      productSuggestions: data.product_suggestions,
+      createdAt: new Date(data.created_at),
+    };
+  }
+
+  async getSurveysByShopId(shopId: string): Promise<Survey[]> {
+    const { data, error } = await supabase
+      .from("surveys")
+      .select("*")
+      .eq("shop_id", shopId)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    return (data || []).map((survey: any) => ({
+      id: survey.id,
+      shopId: survey.shop_id,
+      respondentName: survey.respondent_name,
+      respondentContact: survey.respondent_contact,
+      respondentRole: survey.respondent_role,
+      productQualityRating: survey.product_quality_rating,
+      serviceRating: survey.service_rating,
+      deliveryRating: survey.delivery_rating,
+      priceRating: survey.price_rating,
+      recommendationLikelihood: survey.recommendation_likelihood,
+      purchaseFrequency: survey.purchase_frequency,
+      feedback: survey.feedback,
+      concerns: JSON.parse(survey.concerns),
+      productSuggestions: survey.product_suggestions,
+      createdAt: new Date(survey.created_at),
+    }));
   }
 }
 

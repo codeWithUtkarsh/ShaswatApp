@@ -16,6 +16,7 @@ import HomePage from "./pages/HomePage";
 import ShopFormPage from "./pages/ShopFormPage";
 import OrderPage from "./pages/OrderPage";
 import OrderSummaryPage from "./pages/OrderSummaryPage";
+import OrderDetailPage from "./pages/OrderDetailPage";
 import DeliveryPage from "./pages/DeliveryPage";
 import SurveyPage from "./pages/SurveyPage";
 import ReturnOrderPage from "./pages/ReturnOrder";
@@ -127,6 +128,15 @@ function App() {
                 element={
                   <AuthWrapper requireAuth={true}>
                     <OrderSummaryPage />
+                  </AuthWrapper>
+                }
+              />
+
+              <Route
+                path="/order-detail/:orderId"
+                element={
+                  <AuthWrapper requireAuth={true}>
+                    <OrderDetailPage />
                   </AuthWrapper>
                 }
               />

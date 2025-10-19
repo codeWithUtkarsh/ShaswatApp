@@ -229,3 +229,47 @@ CREATE TRIGGER update_deliveries_updated_at
   BEFORE UPDATE ON deliveries
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
+
+-- Create surveys table
+CREATE TABLE IF NOT EXISTS surveys (
+  id TEXT PRIMARY KEY,
+  shop_id TEXT REFERENCES shops(id) ON DELETE SET NULL,
+  respondent_name TEXT NOT NULL,
+  respondent_contact TEXT,
+  respondent_role TEXT NOT NULL,
+  product_quality_rating DECIMAL(2, 1) NOT NULL,
+  service_rating DECIMAL(2, 1) NOT NULL,
+  delivery_rating DECIMAL(2, 1) NOT NULL,
+  price_rating DECIMAL(2, 1) NOT NULL,
+  recommendation_likelihood INTEGER NOT NULL CHECK (recommendation_likelihood >= 1 AND recommendation_likelihood <= 10),
+  purchase_frequency TEXT NOT NULL,
+  feedback TEXT,
+  concerns JSONB NOT NULL,
+  product_suggestions TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create indexes for surveys
+CREATE INDEX IF NOT EXISTS idx_surveys_shop_id ON surveys(shop_id);
+CREATE INDEX IF NOT EXISTS idx_surveys_created_at ON surveys(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_surveys_respondent_role ON surveys(respondent_role);
+
+-- Enable Row Level Security for surveys
+ALTER TABLE surveys ENABLE ROW LEVEL SECURITY;
+
+-- Create policies for surveys table
+CREATE POLICY "Allow read access to surveys" ON surveys
+  FOR SELECT
+  USING (true);
+
+CREATE POLICY "Allow insert access to surveys" ON surveys
+  FOR INSERT
+  WITH CHECK (true);
+
+CREATE POLICY "Allow update access to surveys" ON surveys
+  FOR UPDATE
+  USING (true);
+
+CREATE POLICY "Allow delete access to surveys" ON surveys
+  FOR DELETE
+  USING (true);

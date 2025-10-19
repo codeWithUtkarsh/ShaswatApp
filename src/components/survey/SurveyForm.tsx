@@ -27,6 +27,7 @@ import { useForm, Controller } from "react-hook-form";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
+import { shopDB } from "../../services/database";
 
 interface SurveyFormData {
   shopId: string;
@@ -93,15 +94,34 @@ const SurveyForm: React.FC<{ shopId?: string }> = ({ shopId }) => {
   const onSubmit = async (data: SurveyFormData) => {
     try {
       setLoading(true);
-      // Mock API call - in a real app, this would send data to a backend
-      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      console.log('Survey data submitted:', data);
+      const surveyData = {
+        id: Date.now().toString(),
+        shopId: data.shopId || undefined,
+        respondentName: data.respondentName,
+        respondentContact: data.respondentContact,
+        respondentRole: data.respondentRole,
+        productQualityRating: data.productQualityRating,
+        serviceRating: data.serviceRating,
+        deliveryRating: data.deliveryRating,
+        priceRating: data.priceRating,
+        recommendationLikelihood: data.recommendationLikelihood,
+        purchaseFrequency: data.purchaseFrequency,
+        feedback: data.feedback,
+        concerns: data.concerns,
+        productSuggestions: data.productSuggestions,
+        createdAt: new Date(),
+      };
 
-      // Redirect to a thank you page or dashboard
-      navigate("/survey-thank-you");
+      await shopDB.addSurvey(surveyData);
+
+      console.log("Survey data submitted:", surveyData);
+
+      // Redirect to dashboard
+      navigate("/");
     } catch (error) {
       console.error("Error submitting survey:", error);
+      alert("Error submitting survey. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -316,7 +336,12 @@ const SurveyForm: React.FC<{ shopId?: string }> = ({ shopId }) => {
                         max={10}
                         valueLabelDisplay="auto"
                       />
-                      <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                        }}
+                      >
                         <Typography variant="caption" color="text.secondary">
                           Not likely
                         </Typography>
