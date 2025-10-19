@@ -18,6 +18,9 @@ import {
   Typography,
   Divider,
   Autocomplete,
+  Radio,
+  RadioGroup,
+  FormControlLabel,
 } from "@mui/material";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
@@ -47,7 +50,9 @@ const OrderForm: React.FC = () => {
   } = useForm<OrderFormData>({
     defaultValues: {
       shopId: "",
-      orderItems: [{ sku: null as unknown as SKU, quantity: 1 }],
+      orderItems: [
+        { sku: null as unknown as SKU, quantity: 1, unitType: "packet" },
+      ],
       discountCode: "",
     },
   });
@@ -82,7 +87,9 @@ const OrderForm: React.FC = () => {
     // Add order items
     watchedOrderItems.forEach((item) => {
       if (item.sku && item.quantity) {
-        subtotal += item.sku.price * item.quantity;
+        const pricePerUnit =
+          item.unitType === "box" ? item.sku.boxPrice : item.sku.price;
+        subtotal += pricePerUnit * item.quantity;
       }
     });
 
@@ -195,6 +202,29 @@ const OrderForm: React.FC = () => {
                     )}
                   />
                 </Grid>
+                <Grid item xs={12} md={6}>
+                  <Controller
+                    name={`orderItems.${index}.unitType`}
+                    control={control}
+                    render={({ field }) => (
+                      <FormControl>
+                        <FormLabel>Unit Type</FormLabel>
+                        <RadioGroup {...field} row>
+                          <FormControlLabel
+                            value="packet"
+                            control={<Radio />}
+                            label="Packet"
+                          />
+                          <FormControlLabel
+                            value="box"
+                            control={<Radio />}
+                            label="Box"
+                          />
+                        </RadioGroup>
+                      </FormControl>
+                    )}
+                  />
+                </Grid>
                 <Grid item xs={10} md={5}>
                   <Controller
                     name={`orderItems.${index}.quantity`}
@@ -206,7 +236,7 @@ const OrderForm: React.FC = () => {
                     render={({ field }) => (
                       <TextField
                         {...field}
-                        label="Quantity (Packets/Boxes)"
+                        label="Quantity"
                         type="number"
                         fullWidth
                         error={!!errors.orderItems?.[index]?.quantity}
@@ -233,7 +263,11 @@ const OrderForm: React.FC = () => {
             <Button
               startIcon={<AddCircleOutlineIcon />}
               onClick={() =>
-                appendOrderItem({ sku: null as unknown as SKU, quantity: 1 })
+                appendOrderItem({
+                  sku: null as unknown as SKU,
+                  quantity: 1,
+                  unitType: "packet",
+                })
               }
               sx={{ mt: 1 }}
             >

@@ -18,6 +18,9 @@ import {
   Divider,
   Autocomplete,
   InputLabel,
+  Radio,
+  RadioGroup,
+  FormControlLabel,
 } from "@mui/material";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
@@ -65,7 +68,9 @@ const ReturnOrderForm: React.FC = () => {
     defaultValues: {
       shopId: "",
       linkedOrderId: "",
-      returnItems: [{ sku: null as unknown as SKU, quantity: 1 }],
+      returnItems: [
+        { sku: null as unknown as SKU, quantity: 1, unitType: "packet" },
+      ],
       reasonCode: "",
       notes: "",
     },
@@ -120,7 +125,9 @@ const ReturnOrderForm: React.FC = () => {
     if (Array.isArray(watchedReturnItems)) {
       watchedReturnItems.forEach((item) => {
         if (item?.sku && item?.quantity) {
-          subtotal += item.sku.price * item.quantity;
+          const pricePerUnit =
+            item.unitType === "box" ? item.sku.boxPrice : item.sku.price;
+          subtotal += pricePerUnit * item.quantity;
         }
       });
     }
@@ -293,7 +300,11 @@ const ReturnOrderForm: React.FC = () => {
                           );
                         } else {
                           // Otherwise add new return item with quantity 1
-                          appendReturnItem({ sku: item.sku, quantity: 1 });
+                          appendReturnItem({
+                            sku: item.sku,
+                            quantity: 1,
+                            unitType: item.unitType,
+                          });
                         }
                       }}
                     >
@@ -348,9 +359,32 @@ const ReturnOrderForm: React.FC = () => {
                   )}
                 />
               </Grid>
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name={`returnItems.${index}.unitType`}
+                  control={control}
+                  render={({ field }) => (
+                    <FormControl>
+                      <FormLabel>Unit Type</FormLabel>
+                      <RadioGroup {...field} row>
+                        <FormControlLabel
+                          value="packet"
+                          control={<Radio />}
+                          label="Packet"
+                        />
+                        <FormControlLabel
+                          value="box"
+                          control={<Radio />}
+                          label="Box"
+                        />
+                      </RadioGroup>
+                    </FormControl>
+                  )}
+                />
+              </Grid>
               <Grid item xs={10} md={5}>
                 <Controller
-                  name={`returnItems.${index}.quantity` as const}
+                  name={`returnItems.${index}.quantity`}
                   control={control}
                   rules={{
                     required: "Quantity is required",
@@ -359,7 +393,7 @@ const ReturnOrderForm: React.FC = () => {
                   render={({ field }) => (
                     <TextField
                       {...field}
-                      label="Quantity (Packets/Boxes)"
+                      label="Quantity"
                       type="number"
                       fullWidth
                       error={!!errors?.returnItems?.[index]?.quantity}
@@ -386,7 +420,11 @@ const ReturnOrderForm: React.FC = () => {
           <Button
             startIcon={<AddCircleOutlineIcon />}
             onClick={() =>
-              appendReturnItem({ sku: null as unknown as SKU, quantity: 1 })
+              appendReturnItem({
+                sku: null as unknown as SKU,
+                quantity: 1,
+                unitType: "packet",
+              })
             }
             sx={{ mt: 1 }}
           >
@@ -415,7 +453,7 @@ const ReturnOrderForm: React.FC = () => {
                   displayEmpty
                 >
                   <MenuItem value="" disabled>
-                    Select a reason
+
                   </MenuItem>
                   {RETURN_REASONS.map((reason) => (
                     <MenuItem key={reason.value} value={reason.value}>

@@ -65,7 +65,9 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
       let totalAmount = 0;
 
       orderData.orderItems.forEach((item) => {
-        totalAmount += item.sku.price * item.quantity;
+        const pricePerUnit =
+          item.unitType === "box" ? item.sku.boxPrice : item.sku.price;
+        totalAmount += pricePerUnit * item.quantity;
       });
 
       let discountAmount = 0;
@@ -128,7 +130,9 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
       let totalAmount = 0;
 
       returnData.returnItems.forEach((item) => {
-        totalAmount += item.sku.price * item.quantity;
+        const pricePerUnit =
+          item.unitType === "box" ? item.sku.boxPrice : item.sku.price;
+        totalAmount += pricePerUnit * item.quantity;
       });
 
       const newReturnOrder: ReturnOrder = {

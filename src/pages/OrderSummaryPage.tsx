@@ -200,7 +200,13 @@ const OrderSummaryPage: React.FC = () => {
                         {item.sku.name} ({item.sku.id})
                       </Typography>
                       <Typography variant="body1">
-                        ₹{item.sku.price.toFixed(2)} × {item.quantity}
+                        ₹
+                        {(item.unitType === "box"
+                          ? item.sku.boxPrice
+                          : item.sku.price
+                        ).toFixed(2)}{" "}
+                        × {item.quantity}{" "}
+                        {item.unitType === "box" ? "boxes" : "packets"}
                       </Typography>
                     </Box>
                     <Box
@@ -214,7 +220,12 @@ const OrderSummaryPage: React.FC = () => {
                         {item.sku.description}
                       </Typography>
                       <Typography variant="body2" fontWeight="bold">
-                        ₹{(item.sku.price * item.quantity).toFixed(2)}
+                        ₹
+                        {(
+                          (item.unitType === "box"
+                            ? item.sku.boxPrice
+                            : item.sku.price) * item.quantity
+                        ).toFixed(2)}
                       </Typography>
                     </Box>
                   </Box>

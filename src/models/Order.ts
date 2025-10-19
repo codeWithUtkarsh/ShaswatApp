@@ -7,14 +7,18 @@ export interface SKU {
   costPerUnit: number;
 }
 
+export type UnitType = "packet" | "box";
+
 export interface OrderItem {
   sku: SKU;
   quantity: number;
+  unitType: UnitType; // "packet" or "box"
 }
 
 export interface ReturnItem {
   sku: SKU;
   quantity: number;
+  unitType: UnitType; // "packet" or "box"
 }
 
 export interface Order {
