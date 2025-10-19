@@ -24,6 +24,7 @@ export interface ReturnItem {
 export interface Order {
   id?: string;
   shopId: string;
+  employeeId?: string;
   orderItems: OrderItem[];
   totalAmount: number;
   discountCode?: string;
@@ -35,6 +36,7 @@ export interface Order {
 export interface ReturnOrder {
   id?: string;
   shopId: string;
+  employeeId?: string;
   linkedOrderId?: string;
   returnItems: ReturnItem[];
   totalAmount: number;

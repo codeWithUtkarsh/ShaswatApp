@@ -7,6 +7,7 @@ import {
   SKU,
 } from "../models/Order";
 import { shopDB } from "./database";
+import { useUserStore } from "./userStore";
 
 interface OrderStore {
   orders: Order[];
@@ -62,6 +63,10 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
     try {
       set({ loading: true, error: null });
 
+      // Get current user's ID
+      const currentUser = useUserStore.getState().currentUser;
+      const employeeId = currentUser?.id;
+
       let totalAmount = 0;
 
       orderData.orderItems.forEach((item) => {
@@ -80,6 +85,7 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
       const newOrder: Order = {
         id: Date.now().toString(),
         ...orderData,
+        employeeId,
         totalAmount,
         discountAmount,
         finalAmount,
@@ -139,6 +145,10 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
     try {
       set({ loading: true, error: null });
 
+      // Get current user's ID
+      const currentUser = useUserStore.getState().currentUser;
+      const employeeId = currentUser?.id;
+
       let totalAmount = 0;
 
       returnData.returnItems.forEach((item) => {
@@ -150,6 +160,7 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
       const newReturnOrder: ReturnOrder = {
         id: Date.now().toString(),
         ...returnData,
+        employeeId,
         totalAmount,
         createdAt: new Date(),
       };

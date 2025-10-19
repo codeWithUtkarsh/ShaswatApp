@@ -21,6 +21,7 @@ import DeliveryPage from "./pages/DeliveryPage";
 import SurveyPage from "./pages/SurveyPage";
 import ReturnOrderPage from "./pages/ReturnOrder";
 import WelcomePage from "./pages/WelcomePage";
+import AnalyticsPage from "./pages/admin/AnalyticsPage";
 
 // Components
 import AuthWrapper from "./components/auth/AuthWrapper";
@@ -164,6 +165,15 @@ function App() {
                 element={
                   <AuthWrapper requireAuth={true}>
                     <SurveyPage />
+                  </AuthWrapper>
+                }
+              />
+
+              <Route
+                path="/admin/analytics"
+                element={
+                  <AuthWrapper requireAuth={true}>
+                    <AnalyticsPage />
                   </AuthWrapper>
                 }
               />

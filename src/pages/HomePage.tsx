@@ -13,6 +13,7 @@ import {
   Avatar,
   Menu,
   MenuItem,
+  Chip,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
@@ -24,13 +25,18 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 import UndoIcon from "@mui/icons-material/Undo";
+import PeopleIcon from "@mui/icons-material/People";
+import BarChartIcon from "@mui/icons-material/BarChart";
+import SettingsIcon from "@mui/icons-material/Settings";
 
 import { useUser, useClerk } from "@clerk/clerk-react";
+import { useUserStore } from "../services/userStore";
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useUser();
   const { signOut } = useClerk();
+  const { currentUser, isAdmin, syncUserFromClerk } = useUserStore();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [directLoginUser, setDirectLoginUser] = useState<string | null>(null);
   const [isDirectLogin, setIsDirectLogin] = useState<boolean>(false);
@@ -43,6 +49,16 @@ const HomePage: React.FC = () => {
       setDirectLoginUser(localStorage.getItem("userEmail"));
     }
   }, []);
+
+  // Sync user from Clerk to database
+  useEffect(() => {
+    if (user?.emailAddresses?.[0]?.emailAddress && user?.fullName) {
+      syncUserFromClerk(
+        user.emailAddresses[0].emailAddress,
+        user.fullName || "User",
+      );
+    }
+  }, [user, syncUserFromClerk]);
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -84,7 +100,7 @@ const HomePage: React.FC = () => {
             fontWeight="bold"
             sx={{ flexGrow: 1 }}
           >
-              Snack Basket Order Management
+            Snack Basket Order Management
           </Typography>
           <Box sx={{ display: "flex", alignItems: "center" }}>
             <Box sx={{ mr: 2 }}>
@@ -130,7 +146,7 @@ const HomePage: React.FC = () => {
       <Container maxWidth="lg" sx={{ py: 4, flexGrow: 1 }}>
         <Box sx={{ mb: 4 }} className="page-header">
           <Typography variant="h4" component="h1" gutterBottom>
-              Snack Basket Order Management
+            Snack Basket Order Management
           </Typography>
           <Typography variant="subtitle1" color="text.secondary">
             Manage your shops and orders efficiently
@@ -150,15 +166,34 @@ const HomePage: React.FC = () => {
                 boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
               }}
             >
-              <Typography variant="h5" gutterBottom fontWeight="600">
-                Welcome,{" "}
-                {isDirectLogin
-                  ? directLoginUser?.split("@")[0] || "User"
-                  : user?.firstName || user?.username || "User"}
-              </Typography>
-              <Typography color="text.secondary">
-                What would you like to do today? Choose from the options below.
-              </Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                }}
+              >
+                <Box>
+                  <Typography variant="h5" gutterBottom fontWeight="600">
+                    Welcome,{" "}
+                    {isDirectLogin
+                      ? directLoginUser?.split("@")[0] || "User"
+                      : user?.firstName || user?.username || "User"}
+                  </Typography>
+                  <Typography color="text.secondary">
+                    What would you like to do today? Choose from the options
+                    below.
+                  </Typography>
+                </Box>
+                {currentUser && (
+                  <Chip
+                    label={currentUser.role.toUpperCase()}
+                    color={isAdmin() ? "error" : "primary"}
+                    sx={{ fontWeight: 600 }}
+                  />
+                )}
+              </Box>
             </Paper>
           </Grid>
 
@@ -535,6 +570,251 @@ const HomePage: React.FC = () => {
               </Box>
             </Paper>
           </Grid>
+
+          {/* Admin Only Section */}
+          {isAdmin() && (
+            <>
+              {/* Admin Section Header */}
+              <Grid item xs={12}>
+                <Box
+                  sx={{
+                    mt: 4,
+                    mb: 2,
+                    p: 2,
+                    borderRadius: 2,
+                    bgcolor: "error.light",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <SettingsIcon sx={{ mr: 1, color: "white" }} />
+                  <Typography
+                    variant="h6"
+                    fontWeight="700"
+                    sx={{ color: "white" }}
+                  >
+                    Admin Panel
+                  </Typography>
+                </Box>
+              </Grid>
+
+              {/* User Management Card */}
+              <Grid item xs={12} sm={6} md={4}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    height: "100%",
+                    borderRadius: 2,
+                    bgcolor: "white",
+                    boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+                    cursor: "pointer",
+                    transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                    "&:hover": {
+                      transform: "translateY(-5px)",
+                      boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
+                    },
+                  }}
+                  onClick={() => navigate("/admin/users")}
+                >
+                  <Box
+                    sx={{
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      p: 4,
+                      textAlign: "center",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 80,
+                        height: 80,
+                        borderRadius: "50%",
+                        bgcolor: "error.light",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        mb: 3,
+                      }}
+                    >
+                      <PeopleIcon sx={{ fontSize: 40, color: "white" }} />
+                    </Box>
+                    <Typography variant="h5" fontWeight="600" gutterBottom>
+                      User Management
+                    </Typography>
+                    <Typography
+                      variant="body1"
+                      color="text.secondary"
+                      sx={{ mb: 3 }}
+                    >
+                      Manage users and assign roles
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      color="error"
+                      size="large"
+                      startIcon={<PeopleIcon />}
+                      sx={{
+                        px: 4,
+                        py: 1.25,
+                        borderRadius: 8,
+                        textTransform: "uppercase",
+                        fontWeight: 600,
+                      }}
+                    >
+                      MANAGE USERS
+                    </Button>
+                  </Box>
+                </Paper>
+              </Grid>
+
+              {/* Analytics Card */}
+              <Grid item xs={12} sm={6} md={4}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    height: "100%",
+                    borderRadius: 2,
+                    bgcolor: "white",
+                    boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+                    cursor: "pointer",
+                    transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                    "&:hover": {
+                      transform: "translateY(-5px)",
+                      boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
+                    },
+                  }}
+                  onClick={() => navigate("/admin/analytics")}
+                >
+                  <Box
+                    sx={{
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      p: 4,
+                      textAlign: "center",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 80,
+                        height: 80,
+                        borderRadius: "50%",
+                        bgcolor: "info.light",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        mb: 3,
+                      }}
+                    >
+                      <BarChartIcon sx={{ fontSize: 40, color: "white" }} />
+                    </Box>
+                    <Typography variant="h5" fontWeight="600" gutterBottom>
+                      Analytics
+                    </Typography>
+                    <Typography
+                      variant="body1"
+                      color="text.secondary"
+                      sx={{ mb: 3 }}
+                    >
+                      View reports and business insights
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      color="info"
+                      size="large"
+                      startIcon={<BarChartIcon />}
+                      sx={{
+                        px: 4,
+                        py: 1.25,
+                        borderRadius: 8,
+                        textTransform: "uppercase",
+                        fontWeight: 600,
+                      }}
+                    >
+                      VIEW REPORTS
+                    </Button>
+                  </Box>
+                </Paper>
+              </Grid>
+
+              {/* Settings Card */}
+              <Grid item xs={12} sm={6} md={4}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    height: "100%",
+                    borderRadius: 2,
+                    bgcolor: "white",
+                    boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+                    cursor: "pointer",
+                    transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                    "&:hover": {
+                      transform: "translateY(-5px)",
+                      boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
+                    },
+                  }}
+                  onClick={() => navigate("/admin/settings")}
+                >
+                  <Box
+                    sx={{
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      p: 4,
+                      textAlign: "center",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 80,
+                        height: 80,
+                        borderRadius: "50%",
+                        bgcolor: "warning.light",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        mb: 3,
+                      }}
+                    >
+                      <SettingsIcon sx={{ fontSize: 40, color: "white" }} />
+                    </Box>
+                    <Typography variant="h5" fontWeight="600" gutterBottom>
+                      System Settings
+                    </Typography>
+                    <Typography
+                      variant="body1"
+                      color="text.secondary"
+                      sx={{ mb: 3 }}
+                    >
+                      Configure system preferences
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      color="warning"
+                      size="large"
+                      startIcon={<SettingsIcon />}
+                      sx={{
+                        px: 4,
+                        py: 1.25,
+                        borderRadius: 8,
+                        textTransform: "uppercase",
+                        fontWeight: 600,
+                      }}
+                    >
+                      SETTINGS
+                    </Button>
+                  </Box>
+                </Paper>
+              </Grid>
+            </>
+          )}
         </Grid>
       </Container>
     </Box>

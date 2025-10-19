@@ -32,6 +32,7 @@ interface OrderItem {
 interface Order {
   id?: string;
   shopId: string;
+  employeeId?: string;
   orderItems: OrderItem[];
   totalAmount: number;
   discountCode?: string;
@@ -49,6 +50,7 @@ interface ReturnItem {
 interface ReturnOrder {
   id?: string;
   shopId: string;
+  employeeId?: string;
   linkedOrderId?: string;
   returnItems: ReturnItem[];
   totalAmount: number;
@@ -95,6 +97,16 @@ interface Survey {
   concerns: string[];
   productSuggestions?: string;
   createdAt: Date;
+}
+
+interface User {
+  id?: string;
+  email: string;
+  name: string;
+  role: "admin" | "employee";
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 class ShopDatabase {
@@ -392,6 +404,7 @@ class ShopDatabase {
         {
           id: order.id,
           shop_id: order.shopId,
+          employee_id: order.employeeId,
           order_items: JSON.stringify(order.orderItems),
           total_amount: order.totalAmount,
           discount_code: order.discountCode,
@@ -408,6 +421,7 @@ class ShopDatabase {
     return {
       id: data.id,
       shopId: data.shop_id,
+      employeeId: data.employee_id,
       orderItems: JSON.parse(data.order_items),
       totalAmount: data.total_amount,
       discountCode: data.discount_code,
@@ -428,6 +442,7 @@ class ShopDatabase {
     return (data || []).map((order: any) => ({
       id: order.id,
       shopId: order.shop_id,
+      employeeId: order.employee_id,
       orderItems: JSON.parse(order.order_items),
       totalAmount: order.total_amount,
       discountCode: order.discount_code,
@@ -466,6 +481,7 @@ class ShopDatabase {
         {
           id: returnOrder.id,
           shop_id: returnOrder.shopId,
+          employee_id: returnOrder.employeeId,
           linked_order_id: returnOrder.linkedOrderId,
           return_items: JSON.stringify(returnOrder.returnItems),
           total_amount: returnOrder.totalAmount,
@@ -502,6 +518,7 @@ class ShopDatabase {
     return (data || []).map((returnOrder: any) => ({
       id: returnOrder.id,
       shopId: returnOrder.shop_id,
+      employeeId: returnOrder.employee_id,
       linkedOrderId: returnOrder.linked_order_id,
       returnItems: JSON.parse(returnOrder.return_items),
       totalAmount: returnOrder.total_amount,
@@ -831,6 +848,129 @@ class ShopDatabase {
       productSuggestions: survey.product_suggestions,
       createdAt: new Date(survey.created_at),
     }));
+  }
+
+  // User methods
+  async addUser(user: User): Promise<User> {
+    const { data, error } = await supabase
+      .from("users")
+      .insert([
+        {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          is_active: user.isActive,
+          created_at: user.createdAt.toISOString(),
+          updated_at: user.updatedAt.toISOString(),
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return {
+      id: data.id,
+      email: data.email,
+      name: data.name,
+      role: data.role,
+      isActive: data.is_active,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at),
+    };
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    const { data, error } = await supabase
+      .from("users")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    return (data || []).map((user: any) => ({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      isActive: user.is_active,
+      createdAt: new Date(user.created_at),
+      updatedAt: new Date(user.updated_at),
+    }));
+  }
+
+  async getUserById(id: string): Promise<User | null> {
+    const { data, error } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) return null;
+
+    return {
+      id: data.id,
+      email: data.email,
+      name: data.name,
+      role: data.role,
+      isActive: data.is_active,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at),
+    };
+  }
+
+  async getUserByEmail(email: string): Promise<User | null> {
+    const { data, error } = await supabase
+      .from("users")
+      .select("*")
+      .eq("email", email)
+      .single();
+
+    if (error) return null;
+
+    return {
+      id: data.id,
+      email: data.email,
+      name: data.name,
+      role: data.role,
+      isActive: data.is_active,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at),
+    };
+  }
+
+  async updateUser(user: User): Promise<User> {
+    const { data, error } = await supabase
+      .from("users")
+      .update({
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        is_active: user.isActive,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", user.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return {
+      id: data.id,
+      email: data.email,
+      name: data.name,
+      role: data.role,
+      isActive: data.is_active,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at),
+    };
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    const { error } = await supabase.from("users").delete().eq("id", id);
+
+    if (error) throw error;
   }
 }
 

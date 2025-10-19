@@ -273,3 +273,50 @@ CREATE POLICY "Allow update access to surveys" ON surveys
 CREATE POLICY "Allow delete access to surveys" ON surveys
   FOR DELETE
   USING (true);
+
+-- Create users table
+CREATE TABLE IF NOT EXISTS users (
+  id TEXT PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('admin', 'employee')),
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create indexes for users
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+CREATE INDEX IF NOT EXISTS idx_users_is_active ON users(is_active);
+
+-- Enable Row Level Security for users
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+
+-- Create policies for users table
+CREATE POLICY "Allow read access to users" ON users
+  FOR SELECT
+  USING (true);
+
+CREATE POLICY "Allow insert access to users" ON users
+  FOR INSERT
+  WITH CHECK (true);
+
+CREATE POLICY "Allow update access to users" ON users
+  FOR UPDATE
+  USING (true);
+
+CREATE POLICY "Allow delete access to users" ON users
+  FOR DELETE
+  USING (true);
+
+-- Trigger to automatically update updated_at for users
+CREATE TRIGGER update_users_updated_at
+  BEFORE UPDATE ON users
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+-- Insert default admin user
+INSERT INTO users (id, email, name, role, is_active) VALUES
+  ('admin-001', 'admin@snackbasket.com', 'Admin User', 'admin', true)
+ON CONFLICT (id) DO NOTHING;
