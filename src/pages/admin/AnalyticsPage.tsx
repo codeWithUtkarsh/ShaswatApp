@@ -449,9 +449,9 @@ const AnalyticsPage: React.FC = () => {
 
         // Add quantities based on unit type
         if (item.unitType === "packet") {
-          preparationSummary[skuId].packetQty += item.quantity;
+          preparationSummary[skuId].packetQty = Number(preparationSummary[skuId].packetQty || 0) + Number(item.quantity || 0);
         } else if (item.unitType === "box") {
-          preparationSummary[skuId].boxQty += item.quantity;
+          preparationSummary[skuId].boxQty = Number(preparationSummary[skuId].boxQty || 0) + Number(item.quantity || 0);
         }
       });
     });
